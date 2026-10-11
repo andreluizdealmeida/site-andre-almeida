@@ -1,0 +1,49 @@
+name: Verificar páginas públicas do escritório
+on:
+  workflow_dispatch:
+  push:
+    branches: [main]
+    paths:
+      - ".github/workflows/pages-healthcheck.yml"
+      - "index.html"
+      - "CNAME"
+  schedule:
+    - cron: "20 11 * * *"
+permissions:
+  contents: read
+jobs:
+  verify-public-pages:
+    runs-on: ubuntu-latest
+    timeout-minutes: 12
+    steps:
+      - name: Testar endpoints HTTPS das páginas existentes
+        shell: bash
+        run: |
+          set -euo pipefail
+          sites=(
+            "https://andreluizdealmeida.github.io/financiamentocaixa/"
+            "https://andreluizdealmeida.github.io/obra-paralizada-caixa/"
+            "https://andreluizdealmeida.github.io/refinanciamento/"
+            "https://andreluizdealmeida.github.io/servidores-do-GDF/"
+            "https://andreluizdealmeida.github.io/Site-/"
+            "https://andreluizdealmeida.github.io/site-andre-almeida/"
+            "https://andreluizdealmeida.com.br/"
+          )
+          errors=0
+          echo "## Saúde das páginas públicas" >> "$GITHUB_STEP_SUMMARY"
+          echo "| URL | HTTP | Conteúdo HTML | Destino final |" >> "$GITHUB_STEP_SUMMARY"
+          echo "|---|---|---|---|" >> "$GITHUB_STEP_SUMMARY"
+          for url in "${sites[@]}"; do
+            body="$(mktemp)"
+            http="$(curl --location --silent --show-error --connect-timeout 8 --max-time 25 --retry 2 --retry-delay 4 -o "$body" -w '%{http_code}' "$url" || true)"
+            valid="não"
+            if grep -iqE '<!doctype html|<html[ >]' "$body"; then valid="sim"; fi
+            if [ "$http" != "200" ] || [ "$valid" != "sim" ]; then
+              echo "::error::Página inacessível ou não HTML: $url HTTP=$http"
+              errors=$((errors+1))
+            fi
+            echo "| $url | ${http:-000} | $valid | [Abrir]($url) |" >> "$GITHUB_STEP_SUMMARY"
+            rm -f "$body"
+          done
+          echo "Total de falhas: $errors" >> "$GITHUB_STEP_SUMMARY"
+          test "$errors" -eq 0
