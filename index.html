@@ -1174,11 +1174,11 @@
                             Envie uma síntese objetiva da sua demanda para direcionarmos a análise preliminar e indicarmos o melhor próximo passo.
                         </p>
                         <p class="triage-note">
-                            Caso o formulário ainda não esteja conectado ao Formspree, o envio será direcionado automaticamente para o WhatsApp do escritório.
+                            Ao continuar, será aberta uma mensagem no WhatsApp do escritório para sua revisão. O contato só será enviado quando você confirmar no aplicativo.
                         </p>
                     </div>
 
-                    <form class="triage-form" action="https://formspree.io/f/seu-id-aqui" method="POST" data-whatsapp="5562994030705">
+                    <form class="triage-form" action="#contato" method="POST" data-whatsapp="5562994030705">
                         <input type="text" name="_gotcha" class="sr-only" tabindex="-1" autocomplete="off">
 
                         <div class="form-row">
@@ -1465,12 +1465,8 @@
             }
 
             triageForm.addEventListener("submit", (event) => {
-                const action = triageForm.getAttribute("action") || "";
-                const isPlaceholderAction = action.includes("seu-id-aqui");
-
-                if (!isPlaceholderAction) return;
-
                 event.preventDefault();
+                if (!triageForm.reportValidity()) return;
 
                 const formData = new FormData(triageForm);
                 const phone = triageForm.dataset.whatsapp;
