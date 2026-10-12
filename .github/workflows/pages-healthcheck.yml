@@ -64,4 +64,37 @@ jobs:
               if [ "$code" != "200" ]; then echo "::error::Página de catálogo quebrada: $page_url"; errors=$((errors+1)); fi
             done < <(echo "$json" | jq -r '.[] | .slug // empty')
           fi
+
+          echo "## Integridade da apresentação original" >> "$GITHUB_STEP_SUMMARY"
+          python3 - <<'PY'
+          import re, urllib.request, sys
+          base="https://raw.githubusercontent.com/andreluizdealmeida/"
+          pages={
+            "Site institucional":("site-andre-almeida","a4821d1ba7b58893a5ce77564db50891bd70da01","css+nav"),
+            "Site alternativo":("Site-","17bfe38e3c588cfa78bbee1074d89d648a22b94e","css"),
+            "Servidores GDF":("servidores-do-GDF","28241ad4a73b405c5a25e528f6e823d7fe3e08ee","exact"),
+          }
+          failed=False
+          for label,(repo,reference,mode) in pages.items():
+            def read(rev):
+              url=base+repo+"/"+rev+"/index.html"
+              request=urllib.request.Request(url,headers={"User-Agent":"AndreOS-LayoutIntegrity/1.0"})
+              with urllib.request.urlopen(request,timeout=20) as response:
+                return response.read().decode("utf-8-sig").replace("\r\n","\n")
+            try:
+              historical,current=read(reference),read("main")
+              css=lambda text:re.findall(r"<style[^>]*>(.*?)</style>",text,re.S|re.I)
+              equal=historical==current if mode=="exact" else css(historical)==css(current)
+              if mode=="css+nav":
+                def nav(text):
+                  match=re.search(r'<ul class="nav-links" id="main-navigation">(.*?)</ul>',text,re.S)
+                  return match.group(1) if match else None
+                equal=equal and nav(historical)==nav(current)
+              print(label+": "+("LAYOUT ORIGINAL PRESERVADO" if equal else "DIVERGÊNCIA NO LAYOUT"))
+              if not equal:failed=True
+            except Exception as error:
+              print(label+": checagem indisponível: "+str(error))
+              failed=True
+          if failed:sys.exit(1)
+          PY
           test "$errors" -eq 0
