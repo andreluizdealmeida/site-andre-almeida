@@ -1,0 +1,27 @@
+name: Smoke Test Unificado Andre OS Marketing Paginas
+on:
+  push:
+    branches: [main]
+    paths: [".github/workflows/marketing-pages-smoke.yml"]
+  workflow_dispatch:
+permissions:
+  contents: read
+jobs:
+  probe:
+    runs-on: ubuntu-latest
+    timeout-minutes: 5
+    steps:
+      - name: Verificar rotas HTTP sem autenticacao
+        shell: bash
+        run: |
+          set -euo pipefail
+          for route in marketing paginas; do
+            tmp="$(mktemp)"
+            code="$(curl -sSL --connect-timeout 8 --max-time 25 -o "$tmp" -w '%{http_code}' "https://andre-legal-os.lovable.app/$route")"
+            bytes="$(wc -c < "$tmp")"
+            echo "/$route HTTP=$code BYTES=$bytes"
+            test "$code" = "200"
+            grep -iqE '<!doctype html|<html[ >]' "$tmp"
+            rm -f "$tmp"
+          done
+          echo "Apenas acesso HTTP anonimo; os fluxos internos necessitam ensaio com login."
