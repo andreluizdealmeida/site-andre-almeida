@@ -1,0 +1,16 @@
+{
+  "schema": 1,
+  "brand": {
+    "office": "André Almeida & Advogados Associados",
+    "oab": "OAB/GO 37.308",
+    "city": "Anápolis - GO",
+    "whatsapp": "5562994030705",
+    "gold": "#d4af37",
+    "bg": "#050505",
+    "text": "#f8f6ef",
+    "logo": "Gemini_Generated_Image_ (3).png"
+  },
+  "pages_base": "https://andreluizdealmeida.com.br/paginas/",
+  "publication_policy": "human_approval_only",
+  "source": "site-andre-almeida/index.html"
+}
