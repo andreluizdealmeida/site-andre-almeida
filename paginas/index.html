@@ -1,0 +1,46 @@
+<!doctype html>
+<html lang="pt-BR"><head><meta charset="utf-8"><meta name="viewport" content="width=device-width,initial-scale=1">
+<title>Áreas de atuação e conteúdos | André Almeida & Advogados Associados</title>
+<meta name="description" content="Informações jurídicas, áreas de atuação e conteúdos publicados pelo escritório André Almeida & Advogados Associados.">
+<link rel="canonical" href="https://andreluizdealmeida.com.br/paginas/">
+<style>*{box-sizing:border-box}body{margin:0;background:#050505;color:#f8f6ef;font:16px/1.7 Arial,sans-serif}
+.wrap{width:min(92%,1080px);margin:auto}header,footer{border-bottom:1px solid #5b4a20;padding:22px 0}
+header .wrap{display:flex;align-items:center;justify-content:space-between;gap:20px;flex-wrap:wrap}
+a{color:inherit}h1,h2{font-family:Georgia,serif;color:#d4af37}h1{font-size:clamp(2rem,5vw,3rem)}
+main{padding:52px 0 100px}p{color:#ddd}.grid{display:grid;grid-template-columns:repeat(auto-fit,minmax(260px,1fr));gap:16px}
+.card{background:#171717;border:1px solid #5b4a20;border-radius:12px;padding:22px;text-decoration:none;display:block}
+.card:hover,.card:focus-visible{border-color:#d4af37}.card h3{margin:0;color:#f0cf76}.card p{font-size:.9rem;margin:10px 0}
+.cta{display:inline-block;background:#d4af37;color:#111;border-radius:8px;text-decoration:none;font-weight:bold;padding:12px 20px;margin-top:24px}footer{border-top:1px solid #5b4a20;border-bottom:0;font-size:.85rem}</style>
+</head><body><header><div class="wrap"><a href="https://andreluizdealmeida.com.br/">André Almeida & Advogados Associados</a>
+<a href="https://andreluizdealmeida.com.br/">Voltar ao site principal</a></div></header>
+<main class="wrap"><h1>Áreas e conteúdos jurídicos</h1><p>Reunimos informações sobre matérias de atuação do escritório. As páginas têm caráter informativo e não substituem avaliação individual.</p>
+<h2>Páginas do domínio institucional</h2><div id="institutional-pages" class="grid"><p>Carregando conteúdos publicados…</p></div>
+<h2>Conteúdos anteriores do escritório</h2><p>Estas páginas permanecem acessíveis nos endereços originais do GitHub Pages.</p>
+<div class="grid">
+<a class="card" href="https://andreluizdealmeida.github.io/financiamentocaixa/"><h3>Financiamento habitacional</h3><p>Conteúdo sobre problemas envolvendo financiamento imobiliário.</p></a>
+<a class="card" href="https://andreluizdealmeida.github.io/obra-paralizada-caixa/"><h3>Obra paralisada</h3><p>Orientações sobre conflitos em obras e financiamento habitacional.</p></a>
+<a class="card" href="https://andreluizdealmeida.github.io/refinanciamento/"><h3>Refinanciamento consignado</h3><p>Informações sobre contratos de refinanciamento e dever de informação.</p></a>
+<a class="card" href="https://andreluizdealmeida.github.io/servidores-do-GDF/"><h3>Direitos de servidores</h3><p>Conteúdo direcionado a questões contratuais de servidores públicos.</p></a>
+</div>
+<a class="cta" href="https://wa.me/5562994030705" target="_blank" rel="noopener noreferrer">Falar com o escritório pelo WhatsApp</a></main>
+<footer><div class="wrap">André Almeida & Advogados Associados · OAB/GO 37.308 · Anápolis/GO</div></footer>
+<script>
+(async function(){
+ const container=document.getElementById("institutional-pages");
+ try {
+  const res=await fetch("./site-pages.json",{cache:"no-store"});
+  if(!res.ok)throw Error("Catálogo indisponível");
+  const pages=await res.json();
+  if(!Array.isArray(pages))throw Error("Catálogo inválido");
+  container.replaceChildren();
+  if(!pages.length){const p=document.createElement("p");p.textContent="Ainda não há novas páginas publicadas por esta Central.";container.appendChild(p);return}
+  for(const entry of pages){
+   if(!entry||!/^[a-z0-9](?:[a-z0-9-]{0,58}[a-z0-9])?$/.test(entry.slug))continue;
+   const a=document.createElement("a");a.className="card";a.href="/paginas/"+entry.slug+"/";
+   const h=document.createElement("h3");h.textContent=String(entry.title||"Conteúdo jurídico");
+   const p=document.createElement("p");p.textContent=String(entry.summary||entry.area||"Informações jurídicas");
+   a.append(h,p);container.appendChild(a);
+  }
+ }catch(e){container.replaceChildren();const p=document.createElement("p");p.textContent="A listagem de novos conteúdos está indisponível. Consulte as páginas anteriores abaixo.";container.appendChild(p);}
+})();
+</script></body></html>
