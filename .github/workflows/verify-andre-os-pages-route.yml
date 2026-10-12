@@ -1,4 +1,4 @@
-name: Diagnosticar rota Central de Paginas Andre OS
+name: Diagnosticar Central Unificada Marketing e Paginas Andre OS
 on:
   push:
     branches: [main]
@@ -12,18 +12,25 @@ jobs:
     runs-on: ubuntu-latest
     timeout-minutes: 5
     steps:
-      - name: Confirmar rota HTTPS com runner externo (sem login)
+      - name: Conferir rotas existentes sem acessar dados privados
         shell: bash
         run: |
           set -euo pipefail
-          url="https://andre-legal-os.lovable.app/paginas"
-          echo "## Rota administrativa (somente acesso anonimo)" >> "$GITHUB_STEP_SUMMARY"
-          status="$(curl -sSL --connect-timeout 8 --max-time 30 -o /tmp/andre-page.out -w '%{http_code}' "$url" || true)"
-          echo "HTTP: $status" >> "$GITHUB_STEP_SUMMARY"
-          echo "Conteudo (bytes): $(wc -c < /tmp/andre-page.out)" >> "$GITHUB_STEP_SUMMARY"
-          echo "Codigo HTTP $status"
-          case "$status" in
-            200|301|302|303|307|308|401|403) echo "Endpoint alcançavel";;
-            *) echo "::error::Rota inacessível HTTP=$status"; exit 1;;
-          esac
-          grep -Eio '<title>[^<]*|<html[^>]*' /tmp/andre-page.out | head -5 || true
+          echo "## Central unificada — acesso HTTP sem login" >> "$GITHUB_STEP_SUMMARY"
+          echo "| Rota | HTTP | HTML |" >> "$GITHUB_STEP_SUMMARY"
+          echo "|---|---|---|" >> "$GITHUB_STEP_SUMMARY"
+          for path in marketing paginas; do
+            url="https://andre-legal-os.lovable.app/$path"
+            file="$(mktemp)"
+            status="$(curl --silent --show-error --location --connect-timeout 8 --max-time 35 -o "$file" -w '%{http_code}' "$url" || true)"
+            html="nao"
+            if grep -iqE '<!doctype html|<html[ >]' "$file"; then html="sim"; fi
+            echo "| /$path | $status | $html |" >> "$GITHUB_STEP_SUMMARY"
+            echo "/$path: HTTP $status; HTML $html"
+            rm -f "$file"
+            if [[ "$status" != "200" || "$html" != "sim" ]]; then
+              echo "::error::Rota /$path ainda nao respondeu como HTML"
+              exit 1
+            fi
+          done
+          echo "As rotas respondem; esta checagem nao autentica nem testa o editor." >> "$GITHUB_STEP_SUMMARY"
