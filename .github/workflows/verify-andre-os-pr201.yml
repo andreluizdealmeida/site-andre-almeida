@@ -1,0 +1,58 @@
+name: Validar PR 201 Andre OS
+on:
+  push:
+    branches: [main]
+    paths: [".github/workflows/verify-andre-os-pr201.yml"]
+  workflow_dispatch:
+permissions:
+  contents: read
+jobs:
+  verify:
+    runs-on: ubuntu-latest
+    timeout-minutes: 40
+    steps:
+      - name: Checkout André OS (pinned candidate)
+        uses: actions/checkout@v4
+        with:
+          repository: andreluizdealmeida/andr-os-unified-legal
+          ref: fa51fc54d301f94840d6544ebe807b3583bfb685
+          persist-credentials: false
+      - name: Bun
+        uses: oven-sh/setup-bun@v2
+        with:
+          bun-version: latest
+      - name: Install dependencies
+        run: bun install --frozen-lockfile
+      - name: Page Studio regression tests
+        run: bun test tests/site-pages-studio.test.ts
+      - name: Full regression tests
+        run: bun test tests/
+      - name: Production build and route generation
+        run: bun run build
+      - name: Strict typecheck
+        run: bunx tsc --noEmit
+      - name: Governed evolution typecheck
+        run: bunx tsc -p tsconfig.evolution-tools.json --noEmit
+  windows:
+    runs-on: windows-latest
+    timeout-minutes: 10
+    steps:
+      - name: Checkout André OS (pinned candidate)
+        uses: actions/checkout@v4
+        with:
+          repository: andreluizdealmeida/andr-os-unified-legal
+          ref: fa51fc54d301f94840d6544ebe807b3583bfb685
+          persist-credentials: false
+      - name: PowerShell gateway parse
+        shell: pwsh
+        run: |
+          $scripts = @('tools/whatsapp-gateway/supervisor-windows.ps1', 'tools/whatsapp-gateway/watchdog-windows.ps1')
+          foreach ($script in $scripts) {
+            $tokens = $null
+            $parseErrors = $null
+            [System.Management.Automation.Language.Parser]::ParseFile((Resolve-Path $script).Path, [ref]$tokens, [ref]$parseErrors) | Out-Null
+            if ($parseErrors.Count -gt 0) {
+              $parseErrors | ForEach-Object { Write-Error ($script + ': ' + $_.Message) }
+              exit 1
+            }
+          }
