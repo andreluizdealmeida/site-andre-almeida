@@ -7,6 +7,8 @@ on:
       - ".github/workflows/pages-healthcheck.yml"
       - "index.html"
       - "CNAME"
+      - "site-config.json"
+      - "paginas/**"
   schedule:
     - cron: "20 11 * * *"
 permissions:
@@ -28,6 +30,7 @@ jobs:
             "https://andreluizdealmeida.github.io/Site-/"
             "https://andreluizdealmeida.github.io/site-andre-almeida/"
             "https://andreluizdealmeida.com.br/"
+            "https://andreluizdealmeida.com.br/paginas/"
           )
           errors=0
           echo "## Saúde das páginas públicas" >> "$GITHUB_STEP_SUMMARY"
@@ -46,4 +49,19 @@ jobs:
             rm -f "$body"
           done
           echo "Total de falhas: $errors" >> "$GITHUB_STEP_SUMMARY"
+          echo "## Links dinâmicos do catálogo" >> "$GITHUB_STEP_SUMMARY"
+          manifest_url="https://andreluizdealmeida.com.br/paginas/site-pages.json"
+          json="$(curl --location --silent --show-error --connect-timeout 8 --max-time 25 "$manifest_url" || true)"
+          if ! echo "$json" | jq -e 'type=="array"' >/dev/null; then
+            echo "::error::Manifesto de páginas indisponível ou inválido"
+            errors=$((errors+1))
+          else
+            while IFS= read -r slug; do
+              [[ "$slug" =~ ^[a-z0-9][a-z0-9-]{0,59}$ ]] || continue
+              page_url="https://andreluizdealmeida.com.br/paginas/$slug/"
+              code="$(curl --location --silent --show-error --connect-timeout 8 --max-time 25 -o /dev/null -w '%{http_code}' "$page_url" || true)"
+              echo "| $page_url | $code | Página do catálogo |" >> "$GITHUB_STEP_SUMMARY"
+              if [ "$code" != "200" ]; then echo "::error::Página de catálogo quebrada: $page_url"; errors=$((errors+1)); fi
+            done < <(echo "$json" | jq -r '.[] | .slug // empty')
+          fi
           test "$errors" -eq 0
