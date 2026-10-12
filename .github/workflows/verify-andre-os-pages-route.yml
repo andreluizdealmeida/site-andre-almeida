@@ -1,0 +1,29 @@
+name: Diagnosticar rota Central de Paginas Andre OS
+on:
+  push:
+    branches: [main]
+    paths:
+      - ".github/workflows/verify-andre-os-pages-route.yml"
+  workflow_dispatch:
+permissions:
+  contents: read
+jobs:
+  probe:
+    runs-on: ubuntu-latest
+    timeout-minutes: 5
+    steps:
+      - name: Confirmar rota HTTPS com runner externo (sem login)
+        shell: bash
+        run: |
+          set -euo pipefail
+          url="https://andre-legal-os.lovable.app/paginas"
+          echo "## Rota administrativa (somente acesso anonimo)" >> "$GITHUB_STEP_SUMMARY"
+          status="$(curl -sSL --connect-timeout 8 --max-time 30 -o /tmp/andre-page.out -w '%{http_code}' "$url" || true)"
+          echo "HTTP: $status" >> "$GITHUB_STEP_SUMMARY"
+          echo "Conteudo (bytes): $(wc -c < /tmp/andre-page.out)" >> "$GITHUB_STEP_SUMMARY"
+          echo "Codigo HTTP $status"
+          case "$status" in
+            200|301|302|303|307|308|401|403) echo "Endpoint alcançavel";;
+            *) echo "::error::Rota inacessível HTTP=$status"; exit 1;;
+          esac
+          grep -Eio '<title>[^<]*|<html[^>]*' /tmp/andre-page.out | head -5 || true
